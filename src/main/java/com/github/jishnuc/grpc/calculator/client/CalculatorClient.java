@@ -1,8 +1,6 @@
 package com.github.jishnuc.grpc.calculator.client;
 
-import com.github.jishnuc.proto.CalculatorServiceGrpc;
-import com.github.jishnuc.proto.SumRequest;
-import com.github.jishnuc.proto.SumResponse;
+import com.github.jishnuc.proto.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
@@ -17,11 +15,20 @@ public class CalculatorClient {
                                                     .setOp1(64)
                                                     .setOp2(49)
                                                     .build();
+
         CalculatorServiceGrpc.CalculatorServiceBlockingStub client=CalculatorServiceGrpc.newBlockingStub(channel);
 
         SumResponse response = client.sum(request);
+        System.out.println("Sum Result ->"+response.getResult());
 
-        System.out.println("Result ->"+response.getResult());
+        System.out.println("------Prime Number Decomposition----");
+        client.primeNumberDecompose(PrimeNumberDecomposeRequest.newBuilder()
+                .setNumber(120)
+                .build())
+                .forEachRemaining(primeNumberDecomposeResponse -> System.out.println(primeNumberDecomposeResponse.getPrimeFactor()));
+
+
+
 
     }
 }
