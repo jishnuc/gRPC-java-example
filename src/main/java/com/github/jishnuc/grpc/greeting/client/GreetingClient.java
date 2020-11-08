@@ -5,6 +5,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -25,8 +26,57 @@ public class GreetingClient {
         doUnaryCall(channel);
         doServerStreamingCall(channel);
         doClientStreamingCall(channel);
+        doBiDiStreamingCall(channel);
         System.out.println("Shutdown");
         channel.shutdown();
+    }
+
+    private void doBiDiStreamingCall(ManagedChannel channel) {
+        GreetingServiceGrpc.GreetingServiceStub asyncClient=GreetingServiceGrpc.newStub(channel);
+        CountDownLatch latch=new CountDownLatch(1);
+        StreamObserver<GreetEveryoneRequest> requestStreamObserver = asyncClient.greetEveryone(new StreamObserver<GreetEveryoneResponse>() {
+            @Override
+            public void onNext(GreetEveryoneResponse value) {
+                System.out.println("Server sent-> " + value.getResult());
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                latch.countDown();
+            }
+
+            @Override
+            public void onCompleted() {
+                System.out.println("Server is done sending data");
+                latch.countDown();
+
+            }
+        });
+
+
+        Arrays.asList("Jishnu","Foo","Bar","Jerry","Toms","Allen","Clark").forEach(
+                name->{
+                    System.out.println("Sending server name->"+name);
+                    requestStreamObserver.onNext(GreetEveryoneRequest.newBuilder()
+                                                .setGreeting(Greeting.newBuilder()
+                                                                    .setFirstName(name))
+                                                .build());
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+        );
+        requestStreamObserver.onCompleted();
+
+        try {
+            latch.await(3,TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
     private void doClientStreamingCall(ManagedChannel channel) {
@@ -45,6 +95,7 @@ public class GreetingClient {
             @Override
             public void onError(Throwable t) {
                 //we get a error from server
+                latch.countDown();
             }
 
             @Override
