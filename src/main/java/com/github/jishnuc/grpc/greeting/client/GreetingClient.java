@@ -16,19 +16,32 @@ public class GreetingClient {
         //DummyServiceGrpc.DummyServiceBlockingStub syncClient=DummyServiceGrpc.newBlockingStub(channel);
         //System.out.println("Creating async stub");
         //DummyServiceGrpc.DummyServiceFutureStub asyncClient=DummyServiceGrpc.newFutureStub(channel);
-
         //Greeting Service
-        GreetingServiceGrpc.GreetingServiceBlockingStub greetSycClient= GreetingServiceGrpc.newBlockingStub(channel);
+        
         Greeting greeting=Greeting.newBuilder()
-                            .setFirstName("Jishnu")
-                            .setLastName("Chatterjee")
-                            .build();
+                .setFirstName("Jishnu")
+                .setLastName("Chatterjee")
+                .build();
+        GreetingServiceGrpc.GreetingServiceBlockingStub greetSycClient= GreetingServiceGrpc.newBlockingStub(channel);
+        
+        
+        //Unary
+       /* 
         GreetingRequest greetingRequest=GreetingRequest.newBuilder()
                                         .setGreeting(greeting)
                                         .build();
         GreetingResponse greetingResponse = greetSycClient.greet(greetingRequest);
 
-        System.out.println("Response-> "+greetingResponse.getResult());
+        System.out.println("Response-> "+greetingResponse.getResult());*/
+
+        
+        //Server Streaming
+        GreetManyTimesRequest greetManyTimesRequest=GreetManyTimesRequest.newBuilder()
+                                                    .setGreeting(greeting)
+                                                    .build();
+        greetSycClient.greetManyTimes(greetManyTimesRequest)
+                        .forEachRemaining(greetManyTimesResponse -> System.out.println(greetManyTimesResponse.getResult()));
+
         System.out.println("Shutdown");
         channel.shutdown();
     }

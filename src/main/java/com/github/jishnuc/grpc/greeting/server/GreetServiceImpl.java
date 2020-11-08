@@ -1,9 +1,6 @@
 package com.github.jishnuc.grpc.greeting.server;
 
-import com.github.jishnuc.proto.Greeting;
-import com.github.jishnuc.proto.GreetingRequest;
-import com.github.jishnuc.proto.GreetingResponse;
-import com.github.jishnuc.proto.GreetingServiceGrpc;
+import com.github.jishnuc.proto.*;
 import io.grpc.stub.StreamObserver;
 
 public class GreetServiceImpl extends GreetingServiceGrpc.GreetingServiceImplBase {
@@ -22,6 +19,30 @@ public class GreetServiceImpl extends GreetingServiceGrpc.GreetingServiceImplBas
         responseObserver.onNext(response);
         //complete RPC call
         responseObserver.onCompleted();
+
+    }
+
+    @Override
+    public void greetManyTimes(GreetManyTimesRequest request, StreamObserver<GreetManyTimesResponse> responseObserver) {
+        //extract fields from request
+        Greeting greeting=request.getGreeting();
+        String firstName=greeting.getFirstName();
+        try {
+            for(int i=0;i<10;i++){
+                String result="Hello "+firstName+", response #"+i;
+                GreetManyTimesResponse response=GreetManyTimesResponse.newBuilder()
+                                                .setResult(result)
+                                                .build();
+                responseObserver.onNext(response);
+
+                Thread.sleep(1000L);
+
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }finally {
+            responseObserver.onCompleted();
+        }
 
     }
 }
