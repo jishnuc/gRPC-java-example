@@ -25,6 +25,46 @@ public class CalculatorClient {
         doSum(channel,45,56);
         doPrimeNumberDecomposition(channel,120);
         doComputeAverage(channel,23,11,44,66,88,99);
+        findMaximum(channel,1,5,2,3,4,8,9,12,4,6,9,34);
+    }
+
+    private void findMaximum(ManagedChannel channel, int... inputs) {
+        CalculatorServiceGrpc.CalculatorServiceStub asyncClient=CalculatorServiceGrpc.newStub(channel);
+        CountDownLatch latch=new CountDownLatch(1);
+        StreamObserver<FindMaximumRequest> requestStreamObserver = asyncClient.findMaximum(new StreamObserver<FindMaximumResponse>() {
+            @Override
+            public void onNext(FindMaximumResponse value) {
+                System.out.println("Server found Maximum: " + value.getMaximum());
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                latch.countDown();
+            }
+
+            @Override
+            public void onCompleted() {
+                System.out.println("Server calculation completed");
+                latch.countDown();
+            }
+        });
+
+
+        for(int in:inputs){
+            System.out.println("Sending value "+in+" to server");
+            requestStreamObserver.onNext(FindMaximumRequest
+                    .newBuilder()
+                    .setValue(in)
+                    .build());
+        }
+
+        requestStreamObserver.onCompleted();
+        System.out.println("Server send completed");
+        try {
+            latch.await(2, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     private void doComputeAverage(ManagedChannel channel, int... values) {
@@ -38,7 +78,7 @@ public class CalculatorClient {
 
             @Override
             public void onError(Throwable t) {
-
+                latch.countDown();
             }
 
             @Override
@@ -83,6 +123,7 @@ public class CalculatorClient {
         SumResponse response = client.sum(request);
         System.out.println("Sum Result ->"+response.getResult());
     }
+
 
 
 }
